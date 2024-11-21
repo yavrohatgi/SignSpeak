@@ -6,6 +6,7 @@
 
 import time
 from machine import Pin, I2C
+import random
 from micropython_bmi270 import bmi270
 
 i2c = I2C(1, sda=Pin(2), scl=Pin(3))  # Correct I2C pins for RP2040
@@ -27,21 +28,19 @@ def lp_norm(vector, p = 2):
                 sum += pow(abs(num), p)
         return pow(sum, 1/p)
 
-def format_data(acceleration_data, gyroscope_data):
+def normalize_vector(vector = [], p = 2):
         """
-        Normalizes and combines acceleration and gyroscope data into a list. 
+        Normalizes vector
 
         Parameters:
-        tuple: acceleration_data
-        tuple: gyroscope_data
+        list: vector
+        int: p
 
         Returns:
-        list: formatted_data
+        list: normalized_data
         """
-        acc_data_norm = lp_norm(acceleration_data)
-        gyr_data_norm = lp_norm(gyroscope_data)
-        # normalizing acceleration and gyroscope data separately
-        return [value/acc_data_norm for value in acceleration_data] + [value/gyr_data_norm for value in gyroscope_data]
+        data_norm = lp_norm(vector, p)
+        return [value/data_norm for value in vector] 
 
 def predict_sign(gesture_data):
         """
@@ -50,17 +49,39 @@ def predict_sign(gesture_data):
         gesture_words = ''
         return gesture_words
 
-def main():
-        numLoops = 10000
-        for i in range(numLoops):
+def read_data(timetoread_ms):
+        """
+        Reads data, creates a specified length vector for each component
+
+        Parameters:
+        int: timetoread_ms --> duration of time, in ms, to read IMU data over
+
+        Returns:
+        list: data_vector --> 2d list of all data
+        """
+        accx_list, accy_list, accz_list, gyrox_list, gyroy_list, gyroz_list = [], [], [], [], [], []
+        # reading data over specified time period
+        for i in range(timetoread_ms):
+                # get data from IMU
                 accx, accy, accz = bmi.acceleration
                 print(f"x:{accx:.2f}m/s2, y:{accy:.2f}m/s2, z{accz:.2f}m/s2")
                 gyrox, gyroy, gyroz = bmi.gyro
                 print("x:{:.2f}°/s, y:{:.2f}°/s, z{:.2f}°/s".format(gyrox, gyroy, gyroz))
+                # add to respective list
+                accx_list.append(accx)
+                accy_list.append(accy)
+                accz_list.append(accz)
+                gyrox_list.append(gyrox)
+                gyroy_list.append(gyroy)
+                gyroz_list.append(gyroz)
+                time.sleep_ms(1)
+        # return normalized data
+        return [normalize_vector(accx_list), normalize_vector(accy_list), normalize_vector(accz_list), normalize_vector(gyrox_list), normalize_vector(gyroy_list), normalize_vector(gyroz_list)]
 
-                data = format_data(bmi.acceleration, bmi.gyro) # take current acceleration and gyroscope data and format into vector
-                predict_sign(data)
-                
-                time.sleep(0.5)
 
+def main():
+        numLoops = 100
+        firstread = read_data(numLoops)
+        predicted_sign = predict_sign(firstread)
+        print(predicted_sign)
 main()
