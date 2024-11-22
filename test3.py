@@ -9,7 +9,9 @@ from machine import Pin, I2C
 import random
 from micropython_bmi270 import bmi270
 
-i2c = I2C(1, sda=Pin(2), scl=Pin(3))  # Correct I2C pins for RP2040
+i2c = I2C(1, sda=Pin(0), scl=Pin(1))  # Correct I2C pins for RP2040
+devices = i2c.scan()
+print("I2C devices found:", devices)
 bmi = bmi270.BMI270(i2c)
 
 def lp_norm(vector, p = 2):
