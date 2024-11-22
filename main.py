@@ -5,9 +5,15 @@
 
 
 import time
-from machine import Pin, I2C
+from machine import Pin, I2C, ADC
 import random
 from micropython_bmi270 import bmi270
+
+# values for flex sensor
+flex_resistance_unbent_ohms = 25000
+flex_resistance_max_ohms = 100000
+resistor_divider_ohms = 10000
+pico_vout_volts = 3.3         
 
 i2c = I2C(0, sda=Pin(0), scl=Pin(1))  # Correct I2C pins for RP2040
 devices = i2c.scan()
@@ -51,6 +57,23 @@ def predict_sign(gesture_data):
         gesture_words = ''
         return gesture_words
 
+def read_flex_angle(pinNum):
+        """
+        Reads angle detected by flex sensor on specified pin. 
+        
+        Parameters:
+        int: pinNum
+        
+        Returns:
+        double: calculatedAngle
+        """
+        adc_pin = ADC(Pin(pinNum, mode = Pin.IN))
+        adc_reading = adc_pin.read_u16()
+        flexV = pico_vout_volts * float(adc_reading) / 4095.0
+        flexR = abs(resistor_divider_ohms * (pico_vout_volts / flexV - 1.0))
+        angle = 90-float(90*flexR/7000)
+        return angle
+
 def read_data(timetoread_ms):
         """
         Reads data, creates a specified length vector for each component
@@ -61,7 +84,7 @@ def read_data(timetoread_ms):
         Returns:
         list: data_vector --> 2d list of all data
         """
-        accx_list, accy_list, accz_list, gyrox_list, gyroy_list, gyroz_list = [], [], [], [], [], []
+        accx_list, accy_list, accz_list, gyrox_list, gyroy_list, gyroz_list, flex_list = [], [], [], [], [], [], []
         # reading data over specified time period
         for i in range(timetoread_ms):
                 # get data from IMU
@@ -76,9 +99,12 @@ def read_data(timetoread_ms):
                 gyrox_list.append(gyrox)
                 gyroy_list.append(gyroy)
                 gyroz_list.append(gyroz)
+                flexangle = read_flex_angle(26) 
+                print("flex angle:\t", flexangle)
+                flex_list.append(flexangle)
                 time.sleep(1)
         # return normalized data
-        return [normalize_vector(accx_list), normalize_vector(accy_list), normalize_vector(accz_list), normalize_vector(gyrox_list), normalize_vector(gyroy_list), normalize_vector(gyroz_list)]
+        return [normalize_vector(accx_list), normalize_vector(accy_list), normalize_vector(accz_list), normalize_vector(gyrox_list), normalize_vector(gyroy_list), normalize_vector(gyroz_list), normalize_vector(flex_list)]
 
 
 def main():
