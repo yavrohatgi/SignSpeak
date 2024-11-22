@@ -137,35 +137,43 @@ def read_data(timetoread_ms):
                 flexangle = read_flex_angle(26) 
                 print("flex angle:\t", flexangle)
                 flex_list.append(flexangle)
-                time.sleep(1)
+                time.sleep(0.25)
         
         return [accx_list, accy_list, accz_list, gyrox_list, gyroy_list, gyroz_list, flex_list] # get normal data only so i can verify
         # return [normalize_vector(accx_list), normalize_vector(accy_list), normalize_vector(accz_list), normalize_vector(gyrox_list), normalize_vector(gyroy_list), normalize_vector(gyroz_list), normalize_vector(flex_list)]
     
 
-def log_data(data_vector):
+def log_data(data_vector, label):
         """
-        Logs data to a CSV file
+        Logs data to a CSV file with the specified label.
 
         Parameters:
         list: data_vector
+        str: label
 
         Returns:
         None
         """
         filename = "data.csv"
-        with open(filename, "w") as file:
-                file.write("flex,acc-x,acc-y,acc-z,gyro-x,gyro-y,gyro-z\n")  # Header
+        with open(filename, "a") as file:  # Use "a" to append to the file
+                if file.tell() == 0:  # If the file is empty, write the header
+                        file.write("flex,acc-x,acc-y,acc-z,gyro-x,gyro-y,gyro-z,label\n")
                 print("file created")
                 for row in zip(*data_vector):  # Combines lists into rows
-                        file.write(",".join(map(str, row)) + "\n")
-                        print(f"row written: {row}")
+                        file.write(",".join(map(str, row)) + f",{label}\n")
+                        print(f"row written: {row}, label: {label}")
         print("file written")
 
 def main():
-        numLoops = 1000
-        firstread = read_data(numLoops)
-        # predicted_sign = predict_sign(firstread) # uncomment when predict_sign is implemented
-        # print(predicted_sign) # uncomment when predict_sign is implemented
-        log_data(firstread)
+        gestures = ['left', 'right', 'up', 'down']  # Possible gestures
+        numLoops = 100 # Number of readings per gesture
+
+        for gesture in gestures:
+                print(f"Prepare to perform the gesture: {gesture}")
+                time.sleep(3)  # Allow user to prepare
+                print(f"Recording data for: {gesture}")
+                data_vector = read_data(numLoops)  # Collect data
+                log_data(data_vector, label=gesture)  # Save data with gesture label
+        print("Data collection complete.")
+
 main()
