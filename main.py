@@ -5,7 +5,7 @@
 
 
 import time
-from machine import Pin, I2C, ADC
+from machine import Pin, I2C, ADC, PWM
 import random
 from micropython_bmi270 import bmi270
 
@@ -74,6 +74,35 @@ def read_flex_angle(pinNum):
         angle = 90-float(90*flexR/7000)
         return angle
 
+def read_wav_to_list(filename):
+    """Reads 8-bit mono WAV file data into a list."""
+    with open(filename, "rb") as f:
+        # Skip WAV header (first 44 bytes for standard WAV files)
+        f.seek(44)
+        # Read the remaining data into a list
+        data = f.read()
+    return [byte for byte in data]
+
+def play_audio(pinNum, audioFileName):
+        """
+        Plays specified audio file on speaker connected to specified pin. 
+        
+        Parameters:
+        int: pinNum
+        str: audioFileName
+
+        Returns:
+        None
+        """
+        speakerFreq = 8000
+        pwm = PWM(Pin(pinNum))
+        pwm.freq(speakerFreq)
+        data = read_wav_to_list(audioFileName)
+        for sample in data:
+                pwm.duty_u16(sample << 8)  # Scale 8-bit to 16-bit for PWM
+                time.sleep_us(int(1e6 / speakerFreq))  # Wait for the sample duration
+        pwm.duty_u16(0)  # Turn off the PWM signal when done
+
 def read_data(timetoread_ms):
         """
         Reads data, creates a specified length vector for each component
@@ -105,7 +134,7 @@ def read_data(timetoread_ms):
                 time.sleep(1)
         # return normalized data
         return [normalize_vector(accx_list), normalize_vector(accy_list), normalize_vector(accz_list), normalize_vector(gyrox_list), normalize_vector(gyroy_list), normalize_vector(gyroz_list), normalize_vector(flex_list)]
-
+    
 
 def main():
         numLoops = 1000
