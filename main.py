@@ -135,10 +135,29 @@ def read_data(timetoread_ms):
         # return normalized data
         return [normalize_vector(accx_list), normalize_vector(accy_list), normalize_vector(accz_list), normalize_vector(gyrox_list), normalize_vector(gyroy_list), normalize_vector(gyroz_list), normalize_vector(flex_list)]
     
+def log_data(data_vector):
+        """
+        Logs data to specified file.
+
+        Parameters:
+        list: data_vector
+        str: filename
+
+        Returns:
+        None
+        """
+        filename = "data.csv" # change if needed
+        with open(filename, "w") as file:
+                file.write("flex,acc-x,acc-y,acc-z,gyro-x,gyro-y,gyro-z\n") # header
+                for row in zip(*data_vector):
+                        # Write each row as a CSV-formatted line
+                        file.write(",".join(map(str, row)) + "\n")
+
 
 def main():
         numLoops = 1000
         firstread = read_data(numLoops)
-        predicted_sign = predict_sign(firstread)
-        print(predicted_sign)
+        # predicted_sign = predict_sign(firstread) # uncomment when predict_sign is implemented
+        # print(predicted_sign) # uncomment when predict_sign is implemented
+        log_data(firstread)
 main()
