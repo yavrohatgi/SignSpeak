@@ -71,7 +71,13 @@ def read_flex_angle(pinNum):
         adc_reading = adc_pin.read_u16()
         flexV = pico_vout_volts * float(adc_reading) / 4095.0
         flexR = abs(resistor_divider_ohms * (pico_vout_volts / flexV - 1.0))
-        angle = 90-float(90*flexR/7000)
+        anglemax = 90
+        anglemin = 0
+        angle = 90-float(90*flexR/7000) # get the angle from the resistance
+        if angle > anglemax:
+                angle = anglemax # if more than 90 degrees, set to 90 degrees
+        elif angle < anglemin:
+                angle = anglemin # if negative angle, set to 0 degrees
         return angle
 
 def read_wav_to_list(filename):
@@ -132,27 +138,29 @@ def read_data(timetoread_ms):
                 print("flex angle:\t", flexangle)
                 flex_list.append(flexangle)
                 time.sleep(1)
-        # return normalized data
-        return [normalize_vector(accx_list), normalize_vector(accy_list), normalize_vector(accz_list), normalize_vector(gyrox_list), normalize_vector(gyroy_list), normalize_vector(gyroz_list), normalize_vector(flex_list)]
+        
+        return [accx_list, accy_list, accz_list, gyrox_list, gyroy_list, gyroz_list, flex_list] # get normal data only so i can verify
+        # return [normalize_vector(accx_list), normalize_vector(accy_list), normalize_vector(accz_list), normalize_vector(gyrox_list), normalize_vector(gyroy_list), normalize_vector(gyroz_list), normalize_vector(flex_list)]
     
+
 def log_data(data_vector):
         """
-        Logs data to specified file.
+        Logs data to a CSV file
 
         Parameters:
         list: data_vector
-        str: filename
 
         Returns:
         None
         """
-        filename = "data.csv" # change if needed
+        filename = "data.csv"
         with open(filename, "w") as file:
-                file.write("flex,acc-x,acc-y,acc-z,gyro-x,gyro-y,gyro-z\n") # header
-                for row in zip(*data_vector):
-                        # Write each row as a CSV-formatted line
+                file.write("flex,acc-x,acc-y,acc-z,gyro-x,gyro-y,gyro-z\n")  # Header
+                print("file created")
+                for row in zip(*data_vector):  # Combines lists into rows
                         file.write(",".join(map(str, row)) + "\n")
-
+                        print(f"row written: {row}")
+        print("file written")
 
 def main():
         numLoops = 1000
