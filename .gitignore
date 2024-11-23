@@ -163,3 +163,4 @@ cython_debug/
 .vscode/extensions.json
 .vscode/settings.json
 .micropico
+.DS_Store

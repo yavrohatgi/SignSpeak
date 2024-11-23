@@ -138,8 +138,8 @@ def read_data(timetoread_ms):
                 print("flex angle:\t", flexangle)
                 flex_list.append(flexangle)
                 time.sleep(0.25)
-        
-        return [accx_list, accy_list, accz_list, gyrox_list, gyroy_list, gyroz_list, flex_list] # get normal data only so i can verify
+
+        return [flex_list, accx_list, accy_list, accz_list, gyrox_list, gyroy_list, gyroz_list]
         # return [normalize_vector(accx_list), normalize_vector(accy_list), normalize_vector(accz_list), normalize_vector(gyrox_list), normalize_vector(gyroy_list), normalize_vector(gyroz_list), normalize_vector(flex_list)]
     
 
