@@ -15,7 +15,7 @@ flex_resistance_max_ohms = 100000
 resistor_divider_ohms = 10000
 pico_vout_volts = 3.3         
 
-i2c = I2C(0, sda=Pin(0), scl=Pin(1))  # Correct I2C pins for RP2040
+i2c = I2C(0, sda=Pin(4), scl=Pin(5))  # Correct I2C pins for RP2040
 devices = i2c.scan()
 print("I2C devices found:", devices)
 bmi = bmi270.BMI270(i2c)
@@ -124,9 +124,9 @@ def read_data(timetoread_ms):
         for i in range(timetoread_ms):
                 # get data from IMU
                 accx, accy, accz = bmi.acceleration
-                print(f"acceleration:\tx:{accx:.2f}m/s2\t y:{accy:.2f}m/s2\t z{accz:.2f}m/s2")
                 gyrox, gyroy, gyroz = bmi.gyro
-                print("gyroscope:\tx:{:.2f}°/s\t y:{:.2f}°/s\t z{:.2f}°/s".format(gyrox, gyroy, gyroz))
+                flexangle = read_flex_angle(26) 
+                print(f"acceleration:\tx: {accx:.2f} m/s2\t y: {accy:.2f} m/s2\t z: {accz:.2f} m/s2\tgyroscope: x: {gyrox:.2f} °/s\t y: {gyroy:.2f} °/s\t z {gyroz:.2f} °/s\t flex angle: {flexangle:.2f}°")
                 # add to respective list
                 accx_list.append(accx)
                 accy_list.append(accy)
@@ -134,8 +134,6 @@ def read_data(timetoread_ms):
                 gyrox_list.append(gyrox)
                 gyroy_list.append(gyroy)
                 gyroz_list.append(gyroz)
-                flexangle = read_flex_angle(26) 
-                print("flex angle:\t", flexangle)
                 flex_list.append(flexangle)
                 time.sleep(0.25)
 
