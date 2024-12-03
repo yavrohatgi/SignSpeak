@@ -15,7 +15,7 @@ flex_resistance_max_ohms = 100000
 resistor_divider_ohms = 10000
 pico_vout_volts = 3.3         
 
-i2c = I2C(0, sda=Pin(4), scl=Pin(5))  # Correct I2C pins for RP2040
+i2c = I2C(0, sda=Pin(4), scl=Pin(5))
 devices = i2c.scan()
 print("I2C devices found:", devices)
 bmi = bmi270.BMI270(i2c)
@@ -165,7 +165,7 @@ def log_data(row_data, label, filename="gesture_data.csv"):
 
 def main():
     gestures = ['left', 'right', 'up', 'down']  # Define the gestures to collect
-    samples_per_gesture = 5  # Number of samples per gesture
+    samples_per_gesture = 25  # Number of samples per gesture
 
     for gesture in gestures:
         print(f"Prepare to perform the gesture: {gesture}")
