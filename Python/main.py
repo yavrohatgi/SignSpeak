@@ -109,69 +109,81 @@ def play_audio(pinNum, audioFileName):
                 time.sleep_us(int(1e6 / speakerFreq))  # Wait for the sample duration
         pwm.duty_u16(0)  # Turn off the PWM signal when done
 
-def read_data(timetoread_ms):
-        """
-        Reads data, creates a specified length vector for each component
+def read_data():
+    """
+    Reads IMU and flex sensor data at four time intervals: t=0.25, 0.5, 0.75, and 1.0 seconds.
 
-        Parameters:
-        int: timetoread_ms --> duration of time, in ms, to read IMU data over
+    Returns:
+    list: Flattened list of sensor readings for one gesture.
+    """
+    data_vector = []
+    for t in [0.25, 0.5, 0.75, 1.0]:  # Read data at specific time intervals
+        accx, accy, accz = bmi.acceleration
+        gyrox, gyroy, gyroz = bmi.gyro
+        flexangle = read_flex_angle(26)
 
-        Returns:
-        list: data_vector --> 2d list of all data
-        """
-        accx_list, accy_list, accz_list, gyrox_list, gyroy_list, gyroz_list, flex_list = [], [], [], [], [], [], []
-        # reading data over specified time period
-        for i in range(timetoread_ms):
-                # get data from IMU
-                accx, accy, accz = bmi.acceleration
-                gyrox, gyroy, gyroz = bmi.gyro
-                flexangle = read_flex_angle(26) 
-                print(f"acceleration:\tx: {accx:.2f} m/s2\t y: {accy:.2f} m/s2\t z: {accz:.2f} m/s2\tgyroscope: x: {gyrox:.2f} °/s\t y: {gyroy:.2f} °/s\t z {gyroz:.2f} °/s\t flex angle: {flexangle:.2f}°")
-                # add to respective list
-                accx_list.append(accx)
-                accy_list.append(accy)
-                accz_list.append(accz)
-                gyrox_list.append(gyrox)
-                gyroy_list.append(gyroy)
-                gyroz_list.append(gyroz)
-                flex_list.append(flexangle)
-                time.sleep(0.25)
+        # Add the sensor data for this timestamp
+        data_vector.extend([accx, accy, accz, gyrox, gyroy, gyroz, flexangle])
+        time.sleep(0.25)  # Wait for the next interval
 
-        return [flex_list, accx_list, accy_list, accz_list, gyrox_list, gyroy_list, gyroz_list]
-        # return [normalize_vector(accx_list), normalize_vector(accy_list), normalize_vector(accz_list), normalize_vector(gyrox_list), normalize_vector(gyroy_list), normalize_vector(gyroz_list), normalize_vector(flex_list)]
+    return data_vector
+
+def log_data(row_data, label, filename="gesture_data.csv"):
+    """
+    Logs a single row of gesture data to a CSV file without duplicating headers.
+
+    Parameters:
+    list: row_data -> Flattened list of sensor readings for one gesture
+    str: label -> Gesture label
+    str: filename -> Name of the CSV file to write data
+
+    Returns:
+    None
+    """
+    # Function to check if the file exists
+    def file_exists(filename):
+        try:
+            with open(filename, "r"):
+                return True
+        except OSError:
+            return False
     
+    # Define the header
+    header = [
+        f"{sensor}_t{time}" for time in [0.25, 0.5, 0.75, 1.0]
+        for sensor in ["acc_x", "acc_y", "acc_z", "gyro_x", "gyro_y", "gyro_z", "flex"]
+    ] + ["label"]
 
-def log_data(data_vector, label):
-        """
-        Logs data to a CSV file with the specified label.
+    with open(filename, "a") as file:
+        # Write the header if the file does not exist
+        if not file_exists(filename):
+            file.write(",".join(header) + "\n")
 
-        Parameters:
-        list: data_vector
-        str: label
-
-        Returns:
-        None
-        """
-        filename = "data.csv"
-        with open(filename, "a") as file:  # Use "a" to append to the file
-                if file.tell() == 0:  # If the file is empty, write the header
-                        file.write("flex,acc-x,acc-y,acc-z,gyro-x,gyro-y,gyro-z,label\n")
-                print("file created")
-                for row in zip(*data_vector):  # Combines lists into rows
-                        file.write(",".join(map(str, row)) + f",{label}\n")
-                        print(f"row written: {row}, label: {label}")
-        print("file written")
+        # Write the row data
+        row_data.append(label)  # Add the label to the end
+        file.write(",".join(map(str, row_data)) + "\n")
 
 def main():
-        gestures = ['left', 'right', 'up', 'down']  # Possible gestures
-        numLoops = 100 # Number of readings per gesture
+    gestures = ['left', 'right', 'up', 'down']  # Define the gestures to collect
+    samples_per_gesture = 5  # Number of samples per gesture
 
-        for gesture in gestures:
-                print(f"Prepare to perform the gesture: {gesture}")
-                time.sleep(3)  # Allow user to prepare
-                print(f"Recording data for: {gesture}")
-                data_vector = read_data(numLoops)  # Collect data
-                log_data(data_vector, label=gesture)  # Save data with gesture label
-        print("Data collection complete.")
+    for gesture in gestures:
+        print(f"Prepare to perform the gesture: {gesture}")
+        time.sleep(3)  # Allow user to prepare
+
+        for sample_num in range(samples_per_gesture):
+            print(f"Recording sample {sample_num + 1}/{samples_per_gesture} for gesture: {gesture}")
+            
+            # start 
+            print("Prepare to perform the gesture in 3 seconds...")
+            time.sleep(3)
+            print("Recording gesture now...")
+
+            # Collect and log data
+            data_vector = read_data()  # Collect data
+            log_data(data_vector, label=gesture)  # Save data with gesture label
+            time.sleep(1)  # Wait 1 second between gesture samples
+
+    print("All gesture data collection complete.")
 
 main()
