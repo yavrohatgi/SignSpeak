@@ -3,7 +3,6 @@
 # example code from https://github.com/jposada202020/MicroPython_BMI270/blob/master/examples/bmi270_simpletest.py
 # Rev 1.0       21 Nov 2024
 
-
 import time
 from machine import Pin, I2C, ADC, PWM
 import random
@@ -70,6 +69,10 @@ def read_flex_angle(pinNum):
         adc_pin = ADC(Pin(pinNum, mode = Pin.IN))
         adc_reading = adc_pin.read_u16()
         flexV = pico_vout_volts * float(adc_reading) / 4095.0
+
+        if flexV <= 0:
+                return 0
+
         flexR = abs(resistor_divider_ohms * (pico_vout_volts / flexV - 1.0))
         anglemax = 90
         anglemin = 0
@@ -116,16 +119,31 @@ def read_data():
     Returns:
     list: Flattened list of sensor readings for one gesture.
     """
+    acc_x_vector = []
+    acc_y_vector = []
+    acc_z_vector = []
+    gyro_x_vector = []
+    gyro_y_vector = []
+    gyro_z_vector = []
+    flex_vector = []
     data_vector = []
-    for t in [0.25, 0.5, 0.75, 1.0]:  # Read data at specific time intervals
+
+    for _ in range(4):  # Read data at specific time intervals
         accx, accy, accz = bmi.acceleration
         gyrox, gyroy, gyroz = bmi.gyro
         flexangle = read_flex_angle(26)
 
         # Add the sensor data for this timestamp
-        data_vector.extend([accx, accy, accz, gyrox, gyroy, gyroz, flexangle])
+        acc_x_vector.append(accx)
+        acc_y_vector.append(accy)
+        acc_z_vector.append(accz)
+        gyro_x_vector.append(gyrox)
+        gyro_y_vector.append(gyroy)
+        gyro_z_vector.append(gyroz)
+        flex_vector.append(flexangle)
         time.sleep(0.25)  # Wait for the next interval
 
+    data_vector = acc_x_vector + acc_y_vector + acc_z_vector + gyro_x_vector + gyro_y_vector + gyro_z_vector + flex_vector
     return data_vector
 
 def log_data(row_data, label, filename="gesture_data.csv"):
@@ -149,10 +167,13 @@ def log_data(row_data, label, filename="gesture_data.csv"):
             return False
     
     # Define the header
-    header = [
-        f"{sensor}_t{time}" for time in [0.25, 0.5, 0.75, 1.0]
-        for sensor in ["acc_x", "acc_y", "acc_z", "gyro_x", "gyro_y", "gyro_z", "flex"]
-    ] + ["label"]
+    header = [['acc_x_t0.25', 'acc_x_t0.5','acc_x_t0.75','acc_x_t1.0',
+          'acc_y_t0.25', 'acc_y_t0.5', 'acc_y_t0.75', 'acc_y_t1.0',
+          'acc_z_t0.25', 'acc_z_t0.5', 'acc_z_t0.75', 'acc_z_t1.0',
+          'gyro_x_t0.25', 'gyro_x_t0.5', 'gyro_x_t0.75', 'gyro_x_t1.0',
+          'gyro_y_t0.25', 'gyro_y_t0.5', 'gyro_y_t0.75', 'gyro_y_t1.0',
+          'gyro_z_t0.25', 'gyro_z_t0.5', 'gyro_z_t0.75', 'gyro_z_t1.0',
+          'flex_t0.25','flex_t0.5','flex_t0.75','flex_t1.0']]
 
     with open(filename, "a") as file:
         # Write the header if the file does not exist
@@ -182,6 +203,7 @@ def main():
             # Collect and log data
             data_vector = read_data()  # Collect data
             log_data(data_vector, label=gesture)  # Save data with gesture label
+            print(data_vector)
             time.sleep(1)  # Wait 1 second between gesture samples
 
     print("All gesture data collection complete.")

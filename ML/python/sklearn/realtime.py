@@ -1,13 +1,28 @@
+import serial
 import numpy as np
 import joblib
 
-# Load the artifacts
-nn_model = joblib.load('nn_model.pkl')
-scaler = joblib.load('scaler.pkl')
-label_encoder = joblib.load('label_encoder.pkl')
+# Load the trained model and preprocessing tools
+nn_model = joblib.load('nn_model.pkl')  # Replace with your model path
+scaler = joblib.load('scaler.pkl')     # Replace with your scaler path
+label_encoder = joblib.load('label_encoder.pkl')  # Replace with your label encoder path
 
-# Simulate a single data input (7x4 flattened into 28 features)
-sample_data = np.random.rand(28)  # Replace with actual test data
-scaled_data = scaler.transform([sample_data])  # Scale the data
-prediction = nn_model.predict(scaled_data)
-print("Predicted Label:", label_encoder.inverse_transform(prediction))
+# Set up the serial connection
+pico_serial = serial.Serial('/dev/tty.usbmodem101', baudrate=9600, timeout=1)  # Replace with your port
+
+# Read and process one set of data
+print("Waiting for one set of data from Pico...")
+try:
+    line = pico_serial.readline().decode('utf-8').strip()  # Read data from Pico
+    if line:
+        raw_data = list(map(float, line.split(',')))  # Convert to list of floats
+        if len(raw_data) == 28:  # Ensure correct data length
+            scaled_data = scaler.transform([raw_data])  # Preprocess the data
+            predicted_label = nn_model.predict(scaled_data)
+            print(f"Predicted Gesture: {label_encoder.inverse_transform(predicted_label)[0]}")
+        else:
+            print(f"Incomplete data received: {line}")
+except ValueError as e:
+    print(f"Error processing data: {e}")
+except KeyboardInterrupt:
+    print("Stopped by user.")
