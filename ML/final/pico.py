@@ -45,7 +45,7 @@ def read_data():
 # Main loop to collect data for 5 signs
 print("Pico ready to send data for 5 signs.")
 sign_count = 0
-total_signs = 5
+total_signs = 10
 
 while sign_count < total_signs:
     # Countdown indicator for user

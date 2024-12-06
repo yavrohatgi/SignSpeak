@@ -33,13 +33,13 @@ ser = serial.Serial(serial_port, baud_rate, timeout=1)
 # ======= Main program loop ========
 print("Listening for data...")
 sign_count = 0
-total_signs = 5 # change accordingly
+total_signs = 10 # change accordingly
 
 try:
     while sign_count < total_signs:
         line = ser.readline().decode('utf-8').strip() # read data from serial port
         if line:
-            # print(f"Received raw data: {line}") 
+            print(f"Received raw data: {line}") 
             if line.startswith("Data sent:"): # Check if the line contains data
                 raw_data = line.split("Data sent:")[-1].strip()
 
