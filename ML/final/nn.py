@@ -6,12 +6,12 @@ import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning, module="sklearn.base")
 
-# Load scaler and KNN model
+# ======== Load the trained model and scaler ========
 scaler = joblib.load('scaler.pkl')
 nn_model = joblib.load('nn_model.pkl')
 label_encoder = joblib.load('label_encoder.pkl')
 
-# Feature order based on uploaded data
+# =========== Define inputs and outputs ==========
 feature_order = [
     'acc_x_t1', 'acc_y_t1', 'acc_z_t1', 'gyro_x_t1', 'gyro_y_t1', 'gyro_z_t1', 'flex_t1',
     'acc_x_t2', 'acc_y_t2', 'acc_z_t2', 'gyro_x_t2', 'gyro_y_t2', 'gyro_z_t2', 'flex_t2',
@@ -25,48 +25,42 @@ feature_order = [
     'acc_x_t10', 'acc_y_t10', 'acc_z_t10', 'gyro_x_t10', 'gyro_y_t10', 'gyro_z_t10', 'flex_t10'
 ]
 
-# Configure serial port for real-time data
-serial_port = '/dev/tty.usbmodem101'  # Replace with your port
-baud_rate = 115200
+# ======= Setup serial port ========
+serial_port = '/dev/tty.usbmodem101' # change accordinly 
+baud_rate = 115200 # default val
 ser = serial.Serial(serial_port, baud_rate, timeout=1)
 
-# Real-time prediction loop
+# ======= Main program loop ========
 print("Listening for data...")
 sign_count = 0
-total_signs = 5
+total_signs = 5 # change accordingly
 
 try:
     while sign_count < total_signs:
-        line = ser.readline().decode('utf-8').strip()  # Read and decode a line
+        line = ser.readline().decode('utf-8').strip() # read data from serial port
         if line:
-            print(f"Received raw data: {line}")  # Print raw data
-
-            # Check if the line is valid CSV data
-            if line.startswith("Data sent:"):
-                # Extract CSV data from the line
+            # print(f"Received raw data: {line}") 
+            if line.startswith("Data sent:"): # Check if the line contains data
                 raw_data = line.split("Data sent:")[-1].strip()
 
                 try:
-                    # Parse the CSV data into a list of floats
-                    data = list(map(float, raw_data.split(',')))
+                    data = list(map(float, raw_data.split(','))) # parse the data into 70 features
 
                     # Check if the number of features matches the expected feature order
                     if len(data) != len(feature_order):
-                        # print(f"Error: Received data has {len(data)} features, expected {len(feature_order)}.")
-                        continue
+                        continue # skip 
 
-                    # Scale the incoming data
-                    scaled_data = scaler.transform([data])
+                    scaled_data = scaler.transform([data]) # scale
+                    
+                    # predict returns an array of values, we need to get the scalar prediction value so index 0
+                    predicted_label = nn_model.predict(scaled_data)[0] # get the prediction
+                    predicted_gesture = label_encoder.inverse_transform([predicted_label])[0] # decode the prediction
+                    print(f"Predicted Gesture: {predicted_gesture}")
 
-                    predicted_label = nn_model.predict(scaled_data)[0]
-
-                    # Decode the label to the gesture name
-                    predicted_gesture = label_encoder.inverse_transform([predicted_label])[0]
-                    print(f"Predicted Gesture: {predicted_gesture}")  # Print prediction
-
-                    sign_count += 1  # Increment sign counter
+                    sign_count += 1
                 except ValueError as e:
                     print(f"Error parsing data: {e}")
+
 finally:
-    ser.close()
+    ser.close() # Close the serial port
     print("Program finished.")

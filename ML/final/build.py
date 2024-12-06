@@ -1,23 +1,17 @@
 import pandas as pd
-import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 import joblib
 
-# Load the new data
-data = pd.read_csv('data.csv')
+# === Load the data ===
+data = pd.read_csv('data.csv') # load the data
+X = data[[col for col in data.columns if col.startswith(('acc', 'gyro', 'flex'))]] # input
+y = data['gesture'] # output
 
-# Features: Include all sensor columns
-X = data[[col for col in data.columns if col.startswith(('acc', 'gyro', 'flex'))]]
-
-# Target: Update to the 'gesture' column
-y = data['gesture']
-
-# Encode labels and preprocess
+# Encode the output
 label_encoder = LabelEncoder()
-y_encoded = label_encoder.fit_transform(y)
+y_encoded = label_encoder.fit_transform(y) # convert up, down, left, right to numbers
 
 # Split the dataset
 X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2, random_state=42)
@@ -35,5 +29,4 @@ nn_model.fit(X_train_scaled, y_train)
 joblib.dump(nn_model, 'nn_model.pkl')
 joblib.dump(scaler, 'scaler.pkl')
 joblib.dump(label_encoder, 'label_encoder.pkl')
-
 print("Model, scaler, and label encoder saved successfully.")
