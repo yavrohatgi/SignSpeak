@@ -33,7 +33,7 @@ ser = serial.Serial(serial_port, baud_rate, timeout=1)
 # ======= Main program loop ========
 print("Listening for data...")
 sign_count = 0
-total_signs = 10 # change accordingly
+total_signs = 20 # change accordingly
 
 try:
     while sign_count < total_signs:
