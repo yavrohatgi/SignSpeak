@@ -27,7 +27,8 @@ Need to look into the capabilities of Tensorflow Lite
 #define NUM_READINGS 10
 #define LABEL_LENGTH 20
 
-struct imu_reading{
+struct single_finger_imu_reading{
+    // TODO: CHANGE THIS TO FLOATS, SAVES STORAGE W/PRECISION TRADEOFF
         double acc_x[NUM_READINGS];
         double acc_y[NUM_READINGS];
         double acc_z[NUM_READINGS];
@@ -231,9 +232,29 @@ void read_IMU(uint8_t selected_imu) {
         Serial.print("\t");
         Serial.print("Z: ");
         Serial.println(curr_imu->data.gyroZ, 3);
+
     } else {
         Serial.print("Error reading from IMU ");
         Serial.println(selected_imu);
+    }
+
+}
+
+// stores the IMU reading in the provided BMI270 object
+void store_IMU_reading(BMI270* curr_imu){
+    if (curr_imu->getSensorData() == BMI2_OK) {
+        // Print acceleration data
+        Serial.print(curr_imu->data.accelX, 3);
+        Serial.print(curr_imu->data.accelY, 3);
+        Serial.print(curr_imu->data.accelZ, 3);
+
+        // Print rotation data
+        Serial.print(curr_imu->data.gyroX, 3);
+        Serial.print(curr_imu->data.gyroY, 3);
+        Serial.print(curr_imu->data.gyroZ, 3);
+
+    } else {
+        Serial.print("Error reading from IMU");
     }
 }
 
@@ -247,9 +268,32 @@ void setup() {
 
 void loop(){
         uint8_t connected_imus[5] = {0, 1, 2, 3, 7};
+        // this loop works, reading sensor values and printing to terminal
         for(int i = 0; i < 5; i++){
                 read_IMU(connected_imus[i]);
                 // this will actually store the values in an array 
         }
+
+        // trying to read one full sample
+        single_finger_imu_reading* finger1;
+
+        // read a single finger
+        for(int reading = 0; reading < NUM_READINGS; reading++){
+            BMI270* curr_imu;
+            store_IMU_reading(curr_imu);
+            finger1->acc_x[reading] = curr_imu->data.accelX;
+            finger1->acc_y[reading] = curr_imu->data.accelY;
+            finger1->acc_z[reading] = curr_imu->data.accelZ;
+            finger1->gyr_x[reading] = curr_imu->data.gyroX;
+            finger1->gyr_y[reading] = curr_imu->data.gyroY;
+            finger1->gyr_z[reading] = curr_imu->data.gyroZ;
+
+            // this is for all 5 fingers simultaneously
+            // for(int imu_ind = 0; imu_ind < 5; imu_ind++){
+            //     read_IMU(connected_imus[i]);
+            //     finger1->acc_x[reading] = curr_imu->data.accelX;
+            // }
+        }
+
         delay(5);
 }
