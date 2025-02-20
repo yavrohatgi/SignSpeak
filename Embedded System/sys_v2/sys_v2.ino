@@ -133,6 +133,8 @@ float read_flex_sensor(uint8_t pin){
         return map(adc_resistance, flex_min_resistance_ohms, flex_max_resistance_ohms, minAngle_degrees, maxAngle_degrees);
 }
 
+uint8_t multiplexerAddress = 0x70;
+
 // Helper function for changing TCA output channel
 void tcaselect(uint8_t channel) {
         if (channel > 7) return;
@@ -140,6 +142,17 @@ void tcaselect(uint8_t channel) {
         Wire.write(1 << channel);
         Wire.endTransmission();
 }
+
+// Create a new sensor object
+BMI270 imu0;
+BMI270 imu1;
+BMI270 imu2;
+BMI270 imu3;
+BMI270 imu4;
+
+// I2C address selection
+uint8_t i2cAddress = BMI2_I2C_PRIM_ADDR; // 0x68
+// uint8_t i2cAddress = BMI2_I2C_SEC_ADDR; // 0x69
 
 void setup_multiplexer_IMUs() {
     // Start serial
@@ -213,17 +226,6 @@ void store_IMU_reading(BMI270* curr_imu, uint8_t imu_index, single_finger_gestur
         }
 }
 
-// Create a new sensor object
-BMI270 imu0;
-BMI270 imu1;
-BMI270 imu2;
-BMI270 imu3;
-BMI270 imu4;
-
-// I2C address selection
-uint8_t i2cAddress = BMI2_I2C_PRIM_ADDR; // 0x68
-// uint8_t i2cAddress = BMI2_I2C_SEC_ADDR; // 0x69
-uint8_t multiplexerAddress = 0x70;
 
 void setup() {
         // this will be used to setup everything. 
@@ -287,7 +289,7 @@ void loop(){
 
         delay(1000); // delay before next set of readings
 
-        /*
+        
         // code to print data stored, reading by reading, finger by finger
         for(int i = 0; i < NUM_READINGS; i++){
                 for(int j = 0; j < 5; j++){
@@ -321,5 +323,5 @@ void loop(){
                 Serial.print(i);
                 Serial.println(" complete");
         }
-        */
+        
 }
