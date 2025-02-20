@@ -6,6 +6,7 @@
 #include "hardware/interp.h"
 #include "hardware/timer.h"
 #include "hardware/adc.h"
+#include <string.h>
 
 #include <Wire.h>
 #include "SparkFun_BMI270_Arduino_Library.h"
@@ -284,7 +285,8 @@ void loop(){
         hand_data.finger_2 = &finger2;
         hand_data.finger_3 = &finger3;
         hand_data.finger_4 = &finger4;
-        hand_data.label = "gesture";
+        // hand_data.label = "gesture";
+        strcpy(hand_data.label, "gesture");  // Correct way to copy a string
         // END METHOD HERE
 
         delay(1000); // delay before next set of readings
