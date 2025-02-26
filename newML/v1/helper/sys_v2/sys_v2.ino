@@ -11,7 +11,7 @@
 #define NUM_FEATURES 30  // (6 IMU readings * 5 fingers)
 #define NUM_SAMPLES 10   // 10 time samples (0.1s, 0.2s, ..., 1s)
 #define GESTURE_COUNT 5  // 5 gestures
-#define SAMPLE_COUNT 10  // 10 samples per gesture
+#define SAMPLE_COUNT 25  // 25 samples per gesture
 
 // Gesture labels
 const char* gestures[] = {"food", "hello", "yes", "please", "bathroom"};
