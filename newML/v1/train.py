@@ -1,15 +1,9 @@
 import tensorflow as tf
-import numpy as np
-import matplotlib.pyplot as plt
-import math
 import pandas as pd
-import io
 import joblib
 
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import LabelEncoder
-
 from tensorflow.keras import layers
 from tensorflow.keras.optimizers import Adam
 
@@ -72,19 +66,23 @@ history = model.fit(x_train, y_train,
 test_loss, test_acc = model.evaluate(x_test, y_test)
 print(f"Test Accuracy: {test_acc:.4f}")
 
-saved_model_dir = "./saved_model"
-model.export(saved_model_dir)
+model.save("my_model.h5")  # ✅ Saves in HDF5 format
 
-# Convert to TensorFlow Lite with backward compatibility
-converter = tf.lite.TFLiteConverter.from_saved_model("./saved_model")
+# Load model from .h5
+model = tf.keras.models.load_model("my_model.h5")  # ✅ Ensure it's loaded
 
-# Optimize for compatibility with older TFLite runtimes
-converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS]
-converter._experimental_lower_tensor_list_ops = False
+converter = tf.lite.TFLiteConverter.from_keras_model(model)
 
+# Optimize for BeagleBone Black (ARMv7)
+converter.optimizations = [tf.lite.Optimize.DEFAULT]
+
+# Force downgrade of all ops to older versions for BBB compatibility
+converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS]  # ✅ Use this instead
+
+# Convert the model
 tflite_model = converter.convert()
 
-# Save the TFLite model
+# Save optimized model
 with open("SIGNSPEAK_MLP_compatible.tflite", "wb") as f:
     f.write(tflite_model)
 
