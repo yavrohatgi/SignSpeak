@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 import tensorflow.lite as tflite # This is for laptops/desktops
 # import tflite_runtime.interpreter as tflite # This is for BeagleBoneBlack
 
@@ -7,15 +6,26 @@ import tensorflow.lite as tflite # This is for laptops/desktops
 label_mapping = {}                                                           # Dictionary to store label mappings
 with open("gesture_labels.txt", "r") as f:                                   # Open text file
     for line in f:                                                           # Read each line
-        label, index = line.strip().split()                                  # Split gesture name and index
-        label_mapping[int(index)] = label                                    # Store as {index: gesture_name}
+        parts = line.strip().split()                                         # Split gesture name and index
+        label = parts[0]                                                     # Gesture name
+        index = int(parts[1])                                                # Gesture index
+        label_mapping[index] = label                                         # Store mapping {index: gesture}
 
-# Load test dataset
-test_file_path = "test.csv"                                                  # Define test dataset path
-test_data = pd.read_csv(test_file_path)                                      # Read test dataset
+# Load test dataset manually (No pandas)
+x_test = []                                                                  # List to store feature values
+y_actual = []                                                                # List to store actual labels
 
-x_test = test_data.iloc[:, :-1].values.astype(np.float32)                    # Features (first 300 columns)
-y_actual = test_data.iloc[:, -1].values                                      # Actual gesture labels
+with open("test.csv", "r") as f:                                             # Open test CSV file
+    lines = f.readlines()                                                    # Read all lines
+    for line in lines[1:]:                                                   # Skip the header
+        parts = line.strip().split(",")                                      # Split by comma
+        features = []                                                        # Temporary list for features
+        for v in parts[:-1]:                                                 # Loop through first 300 values
+            features.append(float(v))                                        # Convert to float and store
+        x_test.append(features)                                              # Store features in x_test
+        y_actual.append(parts[-1])                                           # Store actual gesture label
+
+x_test = np.array(x_test, dtype=np.float32)                                  # Convert features to NumPy array
 
 # Load TensorFlow Lite model
 interpreter = tflite.Interpreter(model_path="SIGNSPEAK_MLP.tflite")          # Load trained TFLite model
@@ -29,24 +39,31 @@ predictions_list = []                                                        # L
 
 # Run inference on all test samples
 for i in range(len(x_test)):
-    sample = x_test[i].reshape(1, 300)                                      # Ensure correct shape (1, 300)
+    sample = x_test[i]                                                       # Get one sample
+    sample = sample.reshape(1, 300)                                          # Ensure correct shape (1, 300)
 
-    interpreter.set_tensor(input_details[0]['index'], sample)               # Load input tensor
-    interpreter.invoke()                                                    # Run model inference
-    predictions = interpreter.get_tensor(output_details[0]['index'])        # Get model output
+    interpreter.set_tensor(input_details[0]['index'], sample)                # Load input tensor
+    interpreter.invoke()                                                      # Run model inference
+    predictions = interpreter.get_tensor(output_details[0]['index'])         # Get model output
 
-    predicted_class = np.argmax(predictions)                                     # Get index of highest probability class
-    predicted_gesture = label_mapping.get(predicted_class)                       # Convert index to gesture
-    actual_gesture = y_actual[i]                                                 # Get actual gesture from dataset
+    predicted_class = np.argmax(predictions)                                 # Get index of highest probability class
+    if predicted_class in label_mapping:                                     # Check if label exists
+        predicted_gesture = label_mapping[predicted_class]                   # Convert index to gesture
+    else:
+        predicted_gesture = "UNKNOWN"                                        # Fallback if index not found
 
-    predictions_list.append((predicted_gesture, actual_gesture))            # Store results
-    if predicted_gesture == actual_gesture:                                 # Compare predicted vs actual gesture
-        correct_predictions += 1                                            # Increment correct predictions count
+    actual_gesture = y_actual[i]                                             # Get actual gesture from dataset
 
-accuracy = (correct_predictions / len(x_test)) * 100                        # Compute accuracy percentage
+    predictions_list.append((predicted_gesture, actual_gesture))             # Store results
+    if predicted_gesture == actual_gesture:                                  # Compare predicted vs actual gesture
+        correct_predictions += 1                                             # Increment correct predictions count
 
-# Display results
-df_results = pd.DataFrame(predictions_list, columns=["Predicted Gesture", "Actual Gesture"])
-print(df_results)
+accuracy = (correct_predictions / len(x_test)) * 100                         # Compute accuracy percentage
 
-print(f"\nModel Accuracy on Test Set: {accuracy:.2f}%")                     # Print final accuracy percentage
+# Display results in a readable format
+print("\nPredicted Gesture | Actual Gesture")
+print("-" * 30)
+for pred, actual in predictions_list:
+    print(f"{pred:<16}  | {actual}")
+
+print(f"\nModel Accuracy on Test Set: {accuracy:.2f}%")                      # Print final accuracy percentage
