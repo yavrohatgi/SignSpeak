@@ -164,3 +164,8 @@ cython_debug/
 .vscode/settings.json
 .micropico
 .DS_Store
+newML/v1/saved_model/fingerprint.pb
+newML/v1/saved_model/keras_metadata.pb
+newML/v1/saved_model/saved_model.pb
+newML/v1/saved_model/variables/variables.data-00000-of-00001
+newML/v1/saved_model/variables/variables.index

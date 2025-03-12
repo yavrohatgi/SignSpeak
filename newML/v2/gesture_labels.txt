@@ -1,0 +1,5 @@
+bathroom 0
+food 1
+hello 2
+please 3
+yes 4
