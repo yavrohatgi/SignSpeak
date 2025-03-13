@@ -1,6 +1,8 @@
 import numpy as np
 import tensorflow.lite as tflite # This is for laptops/desktops
 # import tflite_runtime.interpreter as tflite # This is for BeagleBoneBlack
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow")
 
 label_mapping = {}                                                           # Dictionary to store label mappings
 with open("gesture_labels.txt", "r") as f:                                   # Open text file
@@ -16,6 +18,7 @@ output_details = interpreter.get_output_details()                            # G
 
 np.random.seed(0)                                                            # Set seed for reproducibility
 x0 = np.random.rand(1, 300).astype(np.float32)                               # Generate a random input
+print(x0)
 
 # Run inference
 interpreter.set_tensor(input_details[0]['index'], x0)                        # Load input

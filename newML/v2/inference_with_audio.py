@@ -5,10 +5,10 @@ import Adafruit_BBIO.PWM as PWM
 import time
 
 import numpy as np
-# import tensorflow.lite as tflite # This is for laptops/desktops
-import tflite_runtime.interpreter as tflite # This is for BeagleBoneBlack
-
-
+import tensorflow.lite as tflite # This is for laptops/desktops
+# import tflite_runtime.interpreter as tflite # This is for BeagleBoneBlack
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow")
 
 def load_wav_as_array(filename):
     """Load a WAV file and return an array of samples."""
