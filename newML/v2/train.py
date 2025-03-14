@@ -8,7 +8,7 @@ from tensorflow.keras.optimizers import Adam                                  # 
 
 # Load Dataset
 print("\n---- Dataset Info ----")
-gesture_data = pd.read_csv("data.csv")                                        # Read dataset from CSV file
+gesture_data = pd.read_csv("data_final.csv")                                        # Read dataset from CSV file
 
 x = gesture_data.iloc[:, :-1].values                                          # Features (first 300 columns)
 y = gesture_data.iloc[:, -1].values                                           # Labels (gesture names)
@@ -68,7 +68,7 @@ converter._experimental_lower_tensor_list_ops = False                         # 
 tflite_model = converter.convert()                                            # Convert model to TFLite format
 
 # Save TFLite Model
-tflite_model_path = "SIGNSPEAK_MLP.tflite"                                    # Define TFLite model save path
+tflite_model_path = "SIGNSPEAK_MLP_FINAL.tflite"                                    # Define TFLite model save path
 with open(tflite_model_path, "wb") as f:                                      # Open file to write
     f.write(tflite_model)                                                     # Save converted TFLite model
 print(f"TFLite model saved: {tflite_model_path}")                             # Print confirmation

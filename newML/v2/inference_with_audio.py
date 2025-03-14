@@ -171,7 +171,7 @@ def main():
             label, index = line.strip().split()                                  # Split gesture name and index
             label_mapping[int(index)] = label                                    # Store as {index: gesture_name}
 
-    interpreter = tflite.Interpreter(model_path="SIGNSPEAK_MLP.tflite")          # Load TensorFlow Lite model
+    interpreter = tflite.Interpreter(model_path="SIGNSPEAK_MLP_FINAL.tflite")          # Load TensorFlow Lite model
     interpreter.allocate_tensors()                                               # Allocate memory for tensors
 
     input_details = interpreter.get_input_details()                              # Get input details
