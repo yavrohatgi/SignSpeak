@@ -63,12 +63,12 @@ def collect_reading(used_channels):
     returns a list of one gesture's readings over 1s
     """
     time.sleep(2)
-    print("Start gesture:")
-    print("In 2s")
+    #print("Start gesture:")
+    #print("In 2s")
     time.sleep(1)
-    print("In 1s")
+    #print("In 1s")
     time.sleep(1)
-    print("Now:")
+    #print("Now:")
     gesture_data_list = []
     gesture_length_seconds = 1
     gesture_datapoints = 10
@@ -88,8 +88,8 @@ def collect_reading(used_channels):
                 curr_reading += datapoints_per_reading
             tca[channel].unlock()
         time.sleep(gesture_length_seconds/gesture_datapoints)
-    print(gesture_data_list)
-    print(len(gesture_data_list))
+    #print(gesture_data_list)
+    #print(len(gesture_data_list))
     return gesture_data_list
 
 def load_wav_as_array(filename):
@@ -99,10 +99,10 @@ def load_wav_as_array(filename):
     sample_rate = wav.getframerate()
     n_frames = wav.getnframes()
 
-    print(f"Loaded WAV: {sample_rate} Hz, {n_frames} frames, {sample_width * 8}-bit depth")
+    #(f"Loaded WAV: {sample_rate} Hz, {n_frames} frames, {sample_width * 8}-bit depth")
 
     if wav.getnchannels() != 1:
-        print("Error: Only mono WAV files are supported.")
+        #print("Error: Only mono WAV files are supported.")
         return None, None
 
     samples = []
@@ -113,7 +113,7 @@ def load_wav_as_array(filename):
         elif sample_width == 1:  # 8-bit PCM (unsigned)
             sample = struct.unpack("B", frame_data)[0] - 128  # Convert to signed
         else:
-            print("Unsupported sample width.")
+            #print("Unsupported sample width.")
             return None, None
         samples.append(sample)
 
@@ -156,7 +156,7 @@ def play_audio(output_word):
             while time.time() < expected_time:
                 pass  # Wait exactly until the next frame
     except KeyboardInterrupt:
-        print("Playback interrupted.")
+        #print("Playback interrupted.")
     finally:
         PWM.stop(PWM_PIN)
         PWM.cleanup()
@@ -190,7 +190,7 @@ def main():
     predicted_class = np.argmax(predictions)                                     # Get majority class
     predicted_gesture = label_mapping[predicted_class]                           # Convert to original gesture
     predicted_gesture = label_mapping.get(predicted_class, "Unknown") 
-    print("Predicted Gesture:", predicted_gesture)                               # Print predicted gesture            
+    print("Predicted Gesture:", predicted_gesture)                               # Predicted gesture            
 
     play_audio(f"{predicted_gesture}.wav")                                       # Play the audio
 
