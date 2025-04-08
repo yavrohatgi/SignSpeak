@@ -5,8 +5,6 @@ import Adafruit_BBIO.PWM as PWM
 import time
 import board
 import adafruit_tca9548a
-import bmi270
-from bmi270.BMI270 import *
 import Adafruit_BBIO
 from micropython_bmi270 import bmi270
 
@@ -156,7 +154,7 @@ def play_audio(output_word):
             while time.time() < expected_time:
                 pass  # Wait exactly until the next frame
     except KeyboardInterrupt:
-        #print("Playback interrupted.")
+        print("Playback interrupted.")
     finally:
         PWM.stop(PWM_PIN)
         PWM.cleanup()
