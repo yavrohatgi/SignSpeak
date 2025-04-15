@@ -217,50 +217,49 @@ def main():
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
 
-    for attempt in range(5):
-        print(f"\n--- Inference Attempt {attempt + 1} ---")
+    #print(f"\n--- Inference Attempt {attempt + 1} ---")
 
 
-        # --- print start time ---
-        j=3
-        while j>0:
-            print(f"Starting in {j} seconds...")
-            display_text(oled, f"Starting in {j} seconds...")
-            time.sleep(1)
-            j -= 1
-        display_text(oled, "Perform Gesture")
-        start_total = time.perf_counter()
+    # --- print start time ---
+    j=3
+    while j>0:
+        print(f"Starting in {j} seconds...")
+        display_text(oled, f"Starting in {j} seconds...")
+        time.sleep(1)
+        j -= 1
+    display_text(oled, "Perform Gesture")
+    start_total = time.perf_counter()
 
-        # --- Time: Data Collection ---
-        start_collect = time.perf_counter()
-        reading1 = collect_reading(used_channels, sensors)
-        end_collect = time.perf_counter()
-        print(f"[⏱] Data collection time: {end_collect - start_collect:.3f} seconds")
+    # --- Time: Data Collection ---
+    start_collect = time.perf_counter()
+    reading1 = collect_reading(used_channels, sensors)
+    end_collect = time.perf_counter()
+    print(f"[⏱] Data collection time: {end_collect - start_collect:.3f} seconds")
 
-        x0 = np.array(reading1, dtype=np.float32).reshape(1, -1)
+    x0 = np.array(reading1, dtype=np.float32).reshape(1, -1)
 
-        # --- Time: Model Inference ---
-        start_infer = time.perf_counter()
-        interpreter.set_tensor(input_details[0]['index'], x0)
-        interpreter.invoke()
-        predictions = interpreter.get_tensor(output_details[0]['index'])
-        end_infer = time.perf_counter()
-        print(f"[⏱] Inference time: {end_infer - start_infer:.3f} seconds")
+    # --- Time: Model Inference ---
+    start_infer = time.perf_counter()
+    interpreter.set_tensor(input_details[0]['index'], x0)
+    interpreter.invoke()
+    predictions = interpreter.get_tensor(output_details[0]['index'])
+    end_infer = time.perf_counter()
+    print(f"[⏱] Inference time: {end_infer - start_infer:.3f} seconds")
 
-        predicted_class = np.argmax(predictions)
-        predicted_gesture = label_mapping.get(predicted_class, "Unknown")
-        print("Predicted Gesture:", predicted_gesture)
+    predicted_class = np.argmax(predictions)
+    predicted_gesture = label_mapping.get(predicted_class, "Unknown")
+    print("Predicted Gesture:", predicted_gesture)
 
-        # --- Time: Audio Playback ---
-        display_text(oled, f"gesture: {predicted_gesture}")
-        start_audio = time.perf_counter()
-        play_audio(f"{predicted_gesture}.wav")
-        end_audio = time.perf_counter()
-        print(f"[⏱] Audio playback time: {end_audio - start_audio:.3f} seconds")
+    # --- Time: Audio Playback ---
+    display_text(oled, f"gesture: {predicted_gesture}")
+    start_audio = time.perf_counter()
+    play_audio(f"{predicted_gesture}.wav")
+    end_audio = time.perf_counter()
+    print(f"[⏱] Audio playback time: {end_audio - start_audio:.3f} seconds")
 
-        # --- Time: Total ---
-        end_total = time.perf_counter()
-        print(f"[⏱] Total time: {end_total - start_total:.3f} seconds")
+    # --- Time: Total ---
+    end_total = time.perf_counter()
+    print(f"[⏱] Total time: {end_total - start_total:.3f} seconds")
 
 
 ####################################################################################################
