@@ -80,7 +80,7 @@ def collect_reading(used_channels, sensors):
     return gesture_data_list
 
 # Define gestures
-gestures = ["food", "hello", "yes", "no", "thank you"]
+gestures = ["food", "hello", "yes", "no", "thankyou"]
 for gesture in gestures:
     sample = 0
     batch = []
@@ -91,7 +91,7 @@ for gesture in gestures:
             batch.append(reading + [gesture])
             sample += 1
             if len(batch) == 5:
-                with open('final_data.csv', mode='a', newline='') as file:
+                with open('data1.csv', mode='a', newline='') as file:
                     writer = csv.writer(file)
                     writer.writerows(batch)
                 print("✅ 5 samples written to CSV")

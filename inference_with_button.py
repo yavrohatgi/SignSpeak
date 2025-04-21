@@ -201,19 +201,18 @@ def play_audio(output_word): #-----------------------
 
 def main():
     label_mapping = {}
+    print("Reading gesture_labels.txt")
     with open("gesture_labels.txt", "r") as f:
         for line in f:
-            label, index = line.strip().split()
+            label, index = line.strip().rsplit(" ", 1)
             label_mapping[int(index)] = label
-
+            
     interpreter = tflite.Interpreter(model_path="SIGNSPEAK_MLP_FINAL.tflite")
     interpreter.allocate_tensors()
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
 
     #print(f"\n--- Inference Attempt {attempt + 1} ---")
-
-
     # --- print start time ---
     j=3
     while j>0:
