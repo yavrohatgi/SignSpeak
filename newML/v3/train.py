@@ -8,7 +8,7 @@ from tensorflow.keras.optimizers import Adam                                  # 
 
 # Load Dataset
 print("\n---- Dataset Info ----")
-gesture_data = pd.read_csv("final_data.csv")                                        # Read dataset from CSV file
+gesture_data = pd.read_csv("final_data.csv", header=0)                        # Read dataset from CSV file and treat first row as header
 
 x = gesture_data.iloc[:, :-1].values                                          # Features (first 300 columns)
 y = gesture_data.iloc[:, -1].values                                           # Labels (gesture names)

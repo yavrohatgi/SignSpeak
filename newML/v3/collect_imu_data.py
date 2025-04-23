@@ -101,7 +101,7 @@ for gesture in gestures:
 
     # Write remaining samples if <5
     if batch:
-        with open('final_data.csv', mode='a', newline='') as file:
+        with open('data1.csv', mode='a', newline='') as file:
             writer = csv.writer(file)
             writer.writerows(batch)
-        print("✅ Final leftover samples written")
+        print("Final leftover samples written")
