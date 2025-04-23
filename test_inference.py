@@ -9,6 +9,8 @@ from micropython_bmi270 import bmi270
 import adafruit_ssd1306
 import busio
 
+import os
+import select
 import threading
 import queue
 import numpy as np
@@ -19,7 +21,15 @@ warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow")
 # --------------------- Constants ---------------------
 
 address_bmi270 = 0x68  # I2C address of BMI270 sensor
-gesture_queue = queue.Queue()
+max_queue_size = 20
+gesture_queue = queue.Queue(max_queue_size)
+
+pause_event = threading.Event()
+pause_event.set()  # Start in running state
+
+BUTTON_GPIO_NUM = "60"
+GPIO_PATH = f"/sys/class/gpio/gpio{BUTTON_GPIO_NUM}/value"
+
 
 # --------------------- Classes ---------------------
 
@@ -120,10 +130,24 @@ def play_audio(output_word):
         PWM.stop(PWM_PIN)
         PWM.cleanup()
 
+
+def setup_gpio_button():
+    try:
+        if not os.path.exists(f"/sys/class/gpio/gpio{BUTTON_GPIO_NUM}"):
+            with open("/sys/class/gpio/export", "w") as f:
+                f.write(BUTTON_GPIO_NUM)
+        with open(f"/sys/class/gpio/gpio{BUTTON_GPIO_NUM}/direction", "w") as f:
+            f.write("in")
+        with open(f"/sys/class/gpio/gpio{BUTTON_GPIO_NUM}/edge", "w") as f:
+            f.write("falling")
+    except Exception as e:
+        print("GPIO setup failed:", e)
+
 # --------------------- Thread Functions ---------------------
 
 def gesture_collector():
     while True:
+        pause_event.wait()   # <-- Add this
         print("Collecting new gesture...")
         display_text(oled, "Collecting Gesture")
         reading = collect_reading(used_channels, sensors)
@@ -131,6 +155,12 @@ def gesture_collector():
         # print("Gesture queued.")
         display_text(oled, "Gesture queued")
         time.sleep(0.1)  # Small delay before next collection cycle
+        # TODO: play with this, see how we can communicate to the wearer that they can start their next gesture, 
+        # while not breaking up the flow of their gesture sequence too much
+        # it skipped some gestures when at 0.1, but got most of them, and completely wrong at 0.5.
+        # either we need to make it easier for the user to see it (it worked well when i used the
+        #  terminal to time my gestures, but we can't use the terminal for demo) 
+
 
 def inference_worker():
     label_mapping = {}
@@ -145,6 +175,7 @@ def inference_worker():
     output_details = interpreter.get_output_details()
 
     while True:
+        pause_event.wait()   # <-- Add this
         reading = gesture_queue.get()
         if reading is None:
             break
@@ -167,6 +198,46 @@ def inference_worker():
         end_audio = time.perf_counter()
         # print(f"[⏱] Audio playback time: {end_audio - start_audio:.3f} seconds")
 
+
+def button_monitor():
+    setup_gpio_button()
+    print("Press button to toggle pause/resume")
+    display_text(oled, "Btn: Pause/Resume")
+
+    with open(GPIO_PATH, "r") as gpio_fd:
+        poller = select.poll()
+        poller.register(gpio_fd, select.POLLPRI)
+
+        gpio_fd.seek(0)
+        gpio_fd.read()  # Clear initial interrupt
+
+        while True:
+            events = poller.poll(300)  # Wait for button press
+            if not events:
+                continue
+
+            gpio_fd.seek(0)
+            val = gpio_fd.read().strip()
+            if val == "0":  # Button press detected
+                if pause_event.is_set():
+                    print("System Paused")
+                    display_text(oled, "System Paused")
+                    pause_event.clear()
+                else:
+                    print("System Running")
+                    display_text(oled, "System Running")
+                    pause_event.set()
+
+                # Wait for button release
+                while True:
+                    time.sleep(0.05)
+                    gpio_fd.seek(0)
+                    if gpio_fd.read().strip() == "1":
+                        break
+
+                gpio_fd.seek(0)
+                gpio_fd.read()  # Clear interrupt after release
+                
 
 # --------------------- Initialization ---------------------
 
@@ -204,6 +275,7 @@ def start_system():
 
     threading.Thread(target=gesture_collector, daemon=True).start()
     threading.Thread(target=inference_worker, daemon=True).start()
+    threading.Thread(target=button_monitor, daemon=True).start()
 
     while True:
         time.sleep(1)  # Keep main thread alive
