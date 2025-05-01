@@ -61,6 +61,10 @@ def collect_reading(used_channels, sensors):
     datapoints_per_reading = 6
     max_readings = len(used_channels) * datapoints_per_reading * gesture_datapoints
     curr_reading = 0
+    print("Collecting new gesture...")
+    for i in range(2):
+        display_text(oled, f"Perform gesture in {2-i}s")
+    # display_text(oled, "Collecting Gesture")
     start_collect = time.perf_counter()
     while curr_reading < max_readings:
         for channel in used_channels:
@@ -130,7 +134,6 @@ def play_audio(output_word):
         PWM.stop(PWM_PIN)
         PWM.cleanup()
 
-
 def setup_gpio_button():
     try:
         if not os.path.exists(f"/sys/class/gpio/gpio{BUTTON_GPIO_NUM}"):
@@ -147,19 +150,15 @@ def setup_gpio_button():
 
 def gesture_collector():
     while True:
+    # for i in range(10):
         pause_event.wait()   # <-- Add this
-        print("Collecting new gesture...")
-        display_text(oled, "Collecting Gesture")
+        # print("Collecting new gesture...")
+        # display_text(oled, "Collecting Gesture")
         reading = collect_reading(used_channels, sensors)
         gesture_queue.put(reading)
         # print("Gesture queued.")
-        display_text(oled, "Gesture queued")
+        # display_text(oled, "Gesture queued")
         time.sleep(0.1)  # Small delay before next collection cycle
-        # TODO: play with this, see how we can communicate to the wearer that they can start their next gesture, 
-        # while not breaking up the flow of their gesture sequence too much
-        # it skipped some gestures when at 0.1, but got most of them, and completely wrong at 0.5.
-        # either we need to make it easier for the user to see it (it worked well when i used the
-        #  terminal to time my gestures, but we can't use the terminal for demo) 
 
 
 def inference_worker():
@@ -175,12 +174,14 @@ def inference_worker():
     output_details = interpreter.get_output_details()
 
     while True:
+    # for i in range(10):
         pause_event.wait()   # <-- Add this
         reading = gesture_queue.get()
         if reading is None:
             break
 
-        display_text(oled, "Running inference...")
+        # display_text(oled, "Running inference...")
+        print("Running inference...")
         x0 = np.array(reading, dtype=np.float32).reshape(1, -1)
         start_infer = time.perf_counter()
         interpreter.set_tensor(input_details[0]['index'], x0)
@@ -191,7 +192,7 @@ def inference_worker():
         predicted_class = np.argmax(predictions)
         predicted_gesture = label_mapping.get(predicted_class, "Unknown")
         print(f"Predicted Gesture: {predicted_gesture}")
-        display_text(oled, f"{predicted_gesture}")
+        # display_text(oled, f"{predicted_gesture}")
 
         start_audio = time.perf_counter()
         play_audio(f"{predicted_gesture}.wav")
@@ -277,8 +278,16 @@ def start_system():
     threading.Thread(target=inference_worker, daemon=True).start()
     threading.Thread(target=button_monitor, daemon=True).start()
 
+    # Run for 30 seconds total
+    RUN_DURATION = 60 * 60 * 4  # seconds
+    start_time = time.time()
+
     while True:
-        time.sleep(1)  # Keep main thread alive
+        if time.time() - start_time > RUN_DURATION:
+            print(f"{RUN_DURATION} seconds elapsed. Exiting...")
+            display_text(oled, "Exiting...")
+            break
+        time.sleep(1)  # Keep main thread alive in intervals
 
 if __name__ == "__main__":
     start_system()
