@@ -13,7 +13,7 @@ The glove works without any external cameras, cloud connectivity, or mobile apps
 - Over **500,000 people** in the U.S. use ASL, yet **most others don’t understand it**.
 - Traditional solutions like interpreters or text-based tools don’t work well in fast-paced or emergency settings.
 - Existing commercial products (e.g., BrightSign Glove) cost over **$3000** and are not open source.
-- SignSpeak is **affordable (~$186/unit)**, **modular**, and **open-source**—bringing sign-to-speech accessibility to everyone.
+- SignSpeak is **affordable (~$190/unit)**, **modular**, and **open-source**—bringing sign-to-speech accessibility to everyone.
 
 ---
 
