@@ -6,6 +6,8 @@
 
 The glove works without any external cameras, cloud connectivity, or mobile apps—making it ideal for everyday use, emergency scenarios, and areas with limited connectivity.
 
+![SignSpeak Glove](glove.png)
+
 ---
 
 ## Why SignSpeak?
